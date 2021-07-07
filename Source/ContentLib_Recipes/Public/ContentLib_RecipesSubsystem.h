@@ -19,6 +19,18 @@ class CONTENTLIB_RECIPES_API UContentLib_RecipesSubsystem : public UGameInstance
 
 public:
 
+
+	void FillLoadedClasses();
+	
+	UPROPERTY(BlueprintReadOnly)
+	TArray<UClass*> Items;
+	UPROPERTY(BlueprintReadOnly)
+	TArray<UClass*> Builders;
+	UPROPERTY(BlueprintReadOnly)
+	TArray<UClass*> CraftingComps;
+	UPROPERTY(BlueprintReadOnly)
+	TArray<UClass*> Schematics;
+	
 	UPROPERTY(BlueprintReadOnly)
 		TMap<TSubclassOf<UFGRecipe>, FString> JsonRecipes;
 

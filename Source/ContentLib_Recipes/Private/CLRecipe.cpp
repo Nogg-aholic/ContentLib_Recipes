@@ -2,45 +2,33 @@
 
 
 #include "CLRecipe.h"
-
-
-
 #include "FGSchematic.h"
 #include "FGWorkBench.h"
 #include "Buildables/FGBuildableFactory.h"
 #include "Registry/ModContentRegistry.h"
 #include "Unlocks/FGUnlockRecipe.h"
 
-void UCLRecipe::InitFromStruct(FContentLib_Recipe RecipeStruct, TSubclassOf<class UFGRecipe> Recipe,bool ClearIngredients,bool ClearProducts,bool ClearBuilders)
+void UCLRecipe::InitFromStruct(UContentLib_RecipesSubsystem * Subsystem ,FContentLib_Recipe RecipeStruct, TSubclassOf<class UFGRecipe> Recipe,bool ClearIngredients,bool ClearProducts,bool ClearBuilders)
 {
 	if (!Recipe)
 		return;
 	UFGRecipe *  CDO = Recipe.GetDefaultObject();
-	if (!CDO)
-		return;
-	TArray<UClass*> Arr;
-	TArray<UClass*> Builders;
-	TArray<UClass*> CraftingComps;
-	TArray<UClass*> Schematics;
-	GetDerivedClasses(UFGItemDescriptor::StaticClass(), Arr, true);
-	GetDerivedClasses(AFGBuildableFactory::StaticClass(), Builders, true);
-	GetDerivedClasses(UFGWorkBench::StaticClass(), CraftingComps, true);
-	GetDerivedClasses(UFGSchematic::StaticClass(), Schematics, true);
+
 	if (RecipeStruct.Name != "")
 	{
 		CDO->mDisplayName = FText::FromString(RecipeStruct.Name);
 		CDO->mDisplayNameOverride = true;
 	}
-	AddProductOrIngredient(Recipe,RecipeStruct,Arr,true, ClearIngredients);
-	AddProductOrIngredient(Recipe,RecipeStruct,Arr,false, ClearProducts);
-	AddBuilders(Recipe,RecipeStruct,Builders,CraftingComps, ClearBuilders);
-	AddToSchematicUnlock(Recipe,RecipeStruct,Schematics);
+	AddProductOrIngredient(Recipe,RecipeStruct,Subsystem->Items,true, ClearIngredients);
+	AddProductOrIngredient(Recipe,RecipeStruct,Subsystem->Items,false, ClearProducts);
+	AddBuilders(Recipe,RecipeStruct,Subsystem->Builders,Subsystem->CraftingComps, ClearBuilders);
+	AddToSchematicUnlock(Recipe,RecipeStruct,Subsystem->Schematics);
 	if(RecipeStruct.ManufacturingDuration != 1)
 		CDO->mManufactoringDuration = RecipeStruct.ManufacturingDuration;
-	if (RecipeStruct.mVariablePowerConsumptionConstant != 0)
-		CDO->mVariablePowerConsumptionConstant = RecipeStruct.mVariablePowerConsumptionConstant;
-	if (RecipeStruct.mVariablePowerConsumptionFactor != 1)
-		CDO->mVariablePowerConsumptionFactor = RecipeStruct.mVariablePowerConsumptionFactor;
+	if (RecipeStruct.VariablePowerConsumptionConstant != 0)
+		CDO->mVariablePowerConsumptionConstant = RecipeStruct.VariablePowerConsumptionConstant;
+	if (RecipeStruct.VariablePowerConsumptionFactor != 1)
+		CDO->mVariablePowerConsumptionFactor = RecipeStruct.VariablePowerConsumptionFactor;
 }
 
 void UCLRecipe::AddProductOrIngredient(TSubclassOf<class UFGRecipe> Recipe,FContentLib_Recipe RecipeStruct,TArray<UClass*> Items, const bool Ingredient, bool ClearFirst)
@@ -107,7 +95,12 @@ void UCLRecipe::AddBuilders(TSubclassOf<class UFGRecipe> Recipe,FContentLib_Reci
 		{
 			FString S = e->GetName();
 			FString A = i;
-			if (S.Equals(i, ESearchCase::IgnoreCase) || S.Equals(A.Append("_C"), ESearchCase::IgnoreCase))
+			FString DescPre = FString("Build_").Append(i);
+			if (!i.EndsWith("_C"))
+			{
+				DescPre.Append("_C");
+			}
+			if (S.Equals(i, ESearchCase::IgnoreCase) || S.Equals(A.Append("_C"), ESearchCase::IgnoreCase) || S.Equals(DescPre, ESearchCase::IgnoreCase))
 			{
 				TSoftClassPtr< UObject > Insert = TSoftClassPtr< UObject > (e);
 				if(!Recipe.GetDefaultObject()->mProducedIn.Contains((Insert)))
@@ -118,7 +111,7 @@ void UCLRecipe::AddBuilders(TSubclassOf<class UFGRecipe> Recipe,FContentLib_Reci
 		for(auto e : CraftingComps)
 		{
 			TSubclassOf<class UFGWorkBench> Desc = e;
-			if(Desc.GetDefaultObject()->GetName() == i)
+			if(Desc.GetDefaultObject()->GetName() == i || i == "manual")
 			{
 				TSoftClassPtr< UObject > Insert = TSoftClassPtr< UObject > (e);
 				if(!Recipe.GetDefaultObject()->mProducedIn.Contains((Insert)))
@@ -148,13 +141,31 @@ void UCLRecipe::AddToSchematicUnlock(TSubclassOf<class UFGRecipe> Recipe,FConten
 			if (S.Equals(i, ESearchCase::IgnoreCase) || S.Equals(A.Append("_C"), ESearchCase::IgnoreCase))
 			{
 				TSubclassOf<UFGSchematic> Schematic = e;
+				bool Added = false;
 				for(auto f : Schematic.GetDefaultObject()->mUnlocks)
 				{
 					if(Cast<UFGUnlockRecipe>(f))
 					{
 						Cast<UFGUnlockRecipe>(f)->mRecipes.Add(Recipe);
+						Added = true;
 					}
 				}
+				if (!Added)
+				{
+					UClass* Class = FindObject<UClass>(ANY_PACKAGE, TEXT("BP_UnlockRecipe_C"), false);
+					if (!Class)
+					{
+						Class = LoadClass<UClass>(nullptr, TEXT("/Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C"));
+						if (!Class)
+						{
+							UE_LOG(LogTemp,Fatal,TEXT("ContentLib_Recipes: Couldnt find BP_UnlockRecipe_C wanting to Add to %s"), *Schematic->GetName())
+						}
+					}
+					UFGUnlockRecipe* Object = NewObject<UFGUnlockRecipe>(Schematic.GetDefaultObject(),Class);
+					Object->mRecipes.Add(Recipe);
+					Schematic.GetDefaultObject()->mUnlocks.Add(Object);
+				}
+						
 			}
 		}
 	}

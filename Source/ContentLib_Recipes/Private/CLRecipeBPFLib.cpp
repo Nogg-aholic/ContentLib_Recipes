@@ -12,13 +12,16 @@
 
 FContentLib_Recipe UCLRecipeBPFLib::GenerateFromString(FString String)
 {
-	if(!String.StartsWith("{") || !String.EndsWith("}"))
+ 	if(String == "" || !String.StartsWith("{") || !String.EndsWith("}"))
 		return FContentLib_Recipe();
 	
 	const TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(*String);
 	FJsonSerializer Serializer;
 	TSharedPtr<FJsonObject> Result;
 	Serializer.Deserialize(Reader, Result);
+	if(!Result.IsValid())
+		return FContentLib_Recipe();
+
 	FContentLib_Recipe Recipe;
 	if(Result->HasField("Name") && Result->TryGetField("Name")->Type == EJson::String)
 	{
@@ -109,6 +112,8 @@ FContentLib_Recipe UCLRecipeBPFLib::GenerateFromString(FString String)
 
 FString UCLRecipeBPFLib::SerializeRecipe(const TSubclassOf<UFGRecipe> Recipe)
 {
+	if (!Recipe)
+		return "";
 	const auto CDO = Cast<UFGRecipe>(Recipe->GetDefaultObject());
 	const auto Obj = MakeShared<FJsonObject>();
 	const auto Name = MakeShared<FJsonValueString>(CDO->mDisplayName.ToString());
@@ -155,8 +160,8 @@ FString UCLRecipeBPFLib::SerializeCLRecipe(FContentLib_Recipe Recipe)
 	const auto Obj = MakeShared<FJsonObject>();
 	const auto Name = MakeShared<FJsonValueString>(Recipe.Name);
 	const auto ManufacturingDuration = MakeShared<FJsonValueNumber>(Recipe.ManufacturingDuration);
-	const auto mVariablePowerConsumptionFactor = MakeShared<FJsonValueNumber>(Recipe.mVariablePowerConsumptionFactor);
-	const auto mVariablePowerConsumptionConstant = MakeShared<FJsonValueNumber>(Recipe.mVariablePowerConsumptionConstant);
+	const auto mVariablePowerConsumptionFactor = MakeShared<FJsonValueNumber>(Recipe.VariablePowerConsumptionFactor);
+	const auto mVariablePowerConsumptionConstant = MakeShared<FJsonValueNumber>(Recipe.VariablePowerConsumptionConstant);
 
 	
 	TArray< TSharedPtr<FJsonValue>> Ingredients;
