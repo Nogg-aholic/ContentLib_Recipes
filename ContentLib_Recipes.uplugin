@@ -1,0 +1,31 @@
+{
+	"FileVersion": 3,
+	"Version": 0,
+	"VersionName": "0.1.0",
+	"FriendlyName": "ContentLib_Recipes",
+	"Description": "",
+	"Category": "Other",
+	"CreatedBy": "Nog",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "ContentLib_Recipes",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "SML",
+			"Enabled": true,
+			"SemVersion": "^3.0.0"
+		}
+	]
+}
