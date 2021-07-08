@@ -19,24 +19,21 @@ This mod's recipe format supports basically everything a recipe Blueprint create
 
 ```json
 {
-    "Ingredients": [
-        {
-            "Item": "Coal",
-            "Amount": 1 
-        }
-    ],
-    "Products": [
-        {
-            "Item": "Coal",
-            "Amount": 1
-        }
-    ],
-    "ProducedIn": [
-        "Build_ConstructorMk1"
-    ],
-    "UnlockedBy": [
-        "Schematic_1-1"
-    ],
+	"Name": "BioFuel",
+	"Ingredients": [
+		{
+			"Item": "Coal",
+			"Amount": 1
+		}
+	],
+	"Products": [
+		{
+			"Item": "Biofuel",
+			"Amount": 10
+		}
+	],
+	"ProducedIn":["ConstructorMk1"],
+	"UnlockedBy":["Schematic_1-1"]
 }
 ```
 
