@@ -3,20 +3,28 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ContentLib_RecipesSubsystem.h"
 #include "FGRecipe.h"
 #include "CLRecipe.generated.h"
+
+class UContentLib_RecipesSubsystem;
 
 class UFGSchematic;
 USTRUCT(BlueprintType)
 struct  CONTENTLIB_RECIPES_API  FContentLib_Recipe
 {
 	GENERATED_BODY()
-	FContentLib_Recipe(): ManufacturingDuration(1), VariablePowerConsumptionFactor(1),
-	                      VariablePowerConsumptionConstant(0), ClearIngredients(true), ClearProducts(true),
-	                      ClearBuilders(true)
+	FContentLib_Recipe(): 
+		ManufacturingDuration(1), 
+		ManualManufacturingMultiplier(1), 
+		VariablePowerConsumptionFactor(1),
+		VariablePowerConsumptionConstant(0), 
+		ManufacturingMenuPriority(0),
+		ClearIngredients(true),
+		ClearProducts(true), 
+		ClearBuilders(true)
 	{
 	} ;
+
 	UPROPERTY(BlueprintReadWrite)
 		FString Name;
 	UPROPERTY(BlueprintReadWrite)
@@ -31,10 +39,13 @@ struct  CONTENTLIB_RECIPES_API  FContentLib_Recipe
 	UPROPERTY(BlueprintReadWrite)
 		float ManufacturingDuration;
 	UPROPERTY(BlueprintReadWrite)
+		float ManualManufacturingMultiplier;
+	UPROPERTY(BlueprintReadWrite)
 		float VariablePowerConsumptionFactor;
 	UPROPERTY(BlueprintReadWrite)
 		float VariablePowerConsumptionConstant;
-
+	UPROPERTY(BlueprintReadWrite)
+		float ManufacturingMenuPriority;
 	UPROPERTY(BlueprintReadWrite)
 		bool ClearIngredients;
 	UPROPERTY(BlueprintReadWrite)
@@ -52,14 +63,11 @@ class CONTENTLIB_RECIPES_API UCLRecipe : public UFGRecipe
 	GENERATED_BODY()
 
 	UFUNCTION(BlueprintCallable)
-	static void InitFromStruct(UContentLib_RecipesSubsystem * Subsystem ,FContentLib_Recipe RecipeStruct, TSubclassOf<class UFGRecipe> Recipe, bool ClearIngredients = true, bool ClearProducts = true, bool ClearBuilders = true);
+	static void InitFromStruct(UContentLib_RecipesSubsystem* Subsystem ,FContentLib_Recipe RecipeStruct, TSubclassOf<class UFGRecipe> Recipe, bool ClearIngredients = true, bool ClearProducts = true, bool ClearBuilders = true);
 	UFUNCTION(BlueprintCallable)
-	static TSubclassOf<UCLRecipe> CreateDynRecipe(FString Name);
-	UFUNCTION(BlueprintCallable)
-	static void AddToSchematicUnlock(TSubclassOf<class UFGRecipe> Recipe,FContentLib_Recipe RecipeStruct,TArray<UClass*> Schematics);
+	static void AddToSchematicUnlock(TSubclassOf<class UFGRecipe> Recipe,FContentLib_Recipe RecipeStruct, UContentLib_RecipesSubsystem* Subsystem);
 	UFUNCTION(BlueprintCallable)
 	static void AddBuilders(TSubclassOf<class UFGRecipe> Recipe,FContentLib_Recipe RecipeStruct,TArray<UClass*> Builders,TArray<UClass*> CraftingComps, bool ClearFirst = false);
 	UFUNCTION(BlueprintCallable)
 	static void AddProductOrIngredient(TSubclassOf<class UFGRecipe> Recipe, FContentLib_Recipe RecipeStruct, TArray<UClass*> Items, bool Ingredient, bool ClearFirst = false);
-
 };

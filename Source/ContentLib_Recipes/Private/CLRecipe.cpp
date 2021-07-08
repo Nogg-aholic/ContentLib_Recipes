@@ -3,12 +3,15 @@
 
 #include "CLRecipe.h"
 #include "FGSchematic.h"
+#include "FGSchematicManager.h"
+#include "FGUnlockSubsystem.h"
 #include "FGWorkBench.h"
+#include "ContentLib_RecipesSubsystem.h"
 #include "Buildables/FGBuildableFactory.h"
 #include "Registry/ModContentRegistry.h"
 #include "Unlocks/FGUnlockRecipe.h"
 
-void UCLRecipe::InitFromStruct(UContentLib_RecipesSubsystem * Subsystem ,FContentLib_Recipe RecipeStruct, TSubclassOf<class UFGRecipe> Recipe,bool ClearIngredients,bool ClearProducts,bool ClearBuilders)
+void UCLRecipe::InitFromStruct(UContentLib_RecipesSubsystem* Subsystem ,FContentLib_Recipe RecipeStruct, TSubclassOf<class UFGRecipe> Recipe,bool ClearIngredients,bool ClearProducts,bool ClearBuilders)
 {
 	if (!Recipe)
 		return;
@@ -22,16 +25,21 @@ void UCLRecipe::InitFromStruct(UContentLib_RecipesSubsystem * Subsystem ,FConten
 	AddProductOrIngredient(Recipe,RecipeStruct,Subsystem->Items,true, ClearIngredients);
 	AddProductOrIngredient(Recipe,RecipeStruct,Subsystem->Items,false, ClearProducts);
 	AddBuilders(Recipe,RecipeStruct,Subsystem->Builders,Subsystem->CraftingComps, ClearBuilders);
-	AddToSchematicUnlock(Recipe,RecipeStruct,Subsystem->Schematics);
+	AddToSchematicUnlock(Recipe,RecipeStruct,Subsystem);
 	if(RecipeStruct.ManufacturingDuration != 1)
 		CDO->mManufactoringDuration = RecipeStruct.ManufacturingDuration;
+	if (RecipeStruct.ManualManufacturingMultiplier != 1)
+		CDO->mManualManufacturingMultiplier = RecipeStruct.ManualManufacturingMultiplier;
 	if (RecipeStruct.VariablePowerConsumptionConstant != 0)
 		CDO->mVariablePowerConsumptionConstant = RecipeStruct.VariablePowerConsumptionConstant;
 	if (RecipeStruct.VariablePowerConsumptionFactor != 1)
 		CDO->mVariablePowerConsumptionFactor = RecipeStruct.VariablePowerConsumptionFactor;
+	if (RecipeStruct.ManufacturingMenuPriority != 0)
+		CDO->mManufacturingMenuPriority = RecipeStruct.ManufacturingMenuPriority;
+
 }
 
-void UCLRecipe::AddProductOrIngredient(TSubclassOf<class UFGRecipe> Recipe,FContentLib_Recipe RecipeStruct,TArray<UClass*> Items, const bool Ingredient, bool ClearFirst)
+void UCLRecipe::AddProductOrIngredient(const TSubclassOf<class UFGRecipe> Recipe,FContentLib_Recipe RecipeStruct,TArray<UClass*> Items, bool Ingredient, bool ClearFirst)
 {
 	if (!Recipe)
 		return;
@@ -82,7 +90,7 @@ void UCLRecipe::AddProductOrIngredient(TSubclassOf<class UFGRecipe> Recipe,FCont
 	}
 }
 
-void UCLRecipe::AddBuilders(TSubclassOf<class UFGRecipe> Recipe,FContentLib_Recipe RecipeStruct,TArray<UClass*> Builders,TArray<UClass*> CraftingComps, bool ClearFirst)
+void UCLRecipe::AddBuilders(TSubclassOf<class UFGRecipe> Recipe,FContentLib_Recipe RecipeStruct,TArray<UClass*> Builders,TArray<UClass*> CraftingComps, const bool ClearFirst)
 {
 	if (!Recipe)
 		return;
@@ -96,7 +104,7 @@ void UCLRecipe::AddBuilders(TSubclassOf<class UFGRecipe> Recipe,FContentLib_Reci
 			FString S = e->GetName();
 			FString A = i;
 			FString DescPre = FString("Build_").Append(i);
-			if (!i.EndsWith("_C"))
+			if (!DescPre.EndsWith("_C"))
 			{
 				DescPre.Append("_C");
 			}
@@ -128,19 +136,21 @@ void UCLRecipe::AddBuilders(TSubclassOf<class UFGRecipe> Recipe,FContentLib_Reci
 	}
 }
 
-void UCLRecipe::AddToSchematicUnlock(TSubclassOf<class UFGRecipe> Recipe,FContentLib_Recipe RecipeStruct,TArray<UClass*> Schematics)
+void UCLRecipe::AddToSchematicUnlock(const TSubclassOf<class UFGRecipe> Recipe,FContentLib_Recipe RecipeStruct, UContentLib_RecipesSubsystem* Subsystem)
 {
 	if (!Recipe)
 		return;
 	for (auto i : RecipeStruct.UnlockedBy)
 	{
-		for(auto e : Schematics)
+		for(auto e : Subsystem->Schematics)
 		{
 			FString S = e->GetName();
 			FString A = i;
 			if (S.Equals(i, ESearchCase::IgnoreCase) || S.Equals(A.Append("_C"), ESearchCase::IgnoreCase))
 			{
 				TSubclassOf<UFGSchematic> Schematic = e;
+				AFGSchematicManager * Manager = AFGSchematicManager::Get(Subsystem->GetWorld());
+				AFGUnlockSubsystem * Unlock = AFGUnlockSubsystem::Get(Subsystem->GetWorld());
 				bool Added = false;
 				for(auto f : Schematic.GetDefaultObject()->mUnlocks)
 				{
@@ -158,61 +168,21 @@ void UCLRecipe::AddToSchematicUnlock(TSubclassOf<class UFGRecipe> Recipe,FConten
 						Class = LoadClass<UClass>(nullptr, TEXT("/Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C"));
 						if (!Class)
 						{
-							UE_LOG(LogTemp,Fatal,TEXT("ContentLib_Recipes: Couldnt find BP_UnlockRecipe_C wanting to Add to %s"), *Schematic->GetName())
+							UE_LOG(LogTemp,Fatal,TEXT("CONTENTLIBRECIPES: Couldnt find BP_UnlockRecipe_C wanting to Add to %s"), *Schematic->GetName())
 						}
 					}
 					UFGUnlockRecipe* Object = NewObject<UFGUnlockRecipe>(Schematic.GetDefaultObject(),Class);
 					Object->mRecipes.Add(Recipe);
 					Schematic.GetDefaultObject()->mUnlocks.Add(Object);
 				}
-						
+				if (Manager && Unlock && Unlock->HasAuthority())
+				{
+					if(Manager->IsSchematicPurchased(e))
+					{
+						Unlock->UnlockRecipe(Recipe);
+					}
+				}
 			}
 		}
 	}
 };
-
-TSubclassOf<UCLRecipe> UCLRecipe::CreateDynRecipe(FString Name)
-{
-	if (Name == "" || FindObject<UClass>(ANY_PACKAGE, *Name, false) || FindObject<UClass>(ANY_PACKAGE, *Name.Append("_C"), false))
-		return nullptr;
-    const EClassFlags ParamsClassFlags = CLASS_Native | CLASS_MatchedSerializers;
-	UClass * ParentClass = UCLRecipe::StaticClass();
-    //Code below is taken from GetPrivateStaticClassBody
-    //Allocate memory from ObjectAllocator for class object and call class constructor directly
-    UClass* ConstructedClassObject = (UClass*)GUObjectAllocator.AllocateUObject(sizeof(UDynamicClass), alignof(UDynamicClass), true);
-    ::new (ConstructedClassObject)UDynamicClass(
-    	EC_StaticConstructor,
-    	*Name,
-    	ParentClass->GetStructureSize(),
-    	ParentClass->GetMinAlignment(),
-    	CLASS_Intrinsic,
-    	CASTCLASS_None,
-    	UObject::StaticConfigName(),
-    	EObjectFlags(RF_Public | RF_Standalone | RF_Transient | RF_MarkAsNative | RF_MarkAsRootSet),
-    	ParentClass->ClassConstructor,
-    	ParentClass->ClassVTableHelperCtorCaller,
-    	ParentClass->ClassAddReferencedObjects, nullptr);
-    
-    //Set super structure and ClassWithin (they are required prior to registering)
-    FCppClassTypeInfoStatic TypeInfoStatic = { false };
-    ConstructedClassObject->SetSuperStruct(ParentClass);
-    ConstructedClassObject->ClassWithin = UObject::StaticClass();
-    ConstructedClassObject->SetCppTypeInfoStatic(&TypeInfoStatic);
-#if WITH_EDITOR
-    //Field with cpp type info only exists in editor, in shipping SetCppTypeInfoStatic is empty
-    ConstructedClassObject->SetCppTypeInfoStatic(&TypeInfoStatic);
-#endif
-    //Register pending object, apply class flags, set static type info and link it
-    ConstructedClassObject->RegisterDependencies();
-
-    ConstructedClassObject->DeferredRegister(UDynamicClass::StaticClass(), TEXT("/ContentLib_Recipes/"), *Name);
-
-    //Mark class as Constructed and perform linking
-    ConstructedClassObject->ClassFlags |= (EClassFlags)(ParamsClassFlags | CLASS_Constructed);
-    ConstructedClassObject->AssembleReferenceTokenStream(true);
-    ConstructedClassObject->StaticLink();
-
-    //Make sure default class object is initialized
-    ConstructedClassObject->GetDefaultObject();
-	return ConstructedClassObject;
-}

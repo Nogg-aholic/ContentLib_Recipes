@@ -2,9 +2,6 @@
 
 
 #include "ContentLib_RecipesSubsystem.h"
-
-
-
 #include "FGSchematic.h"
 #include "FGWorkBench.h"
 #include "Buildables/FGBuildableFactory.h"

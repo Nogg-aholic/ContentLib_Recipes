@@ -62,4 +62,7 @@ public:
 	static void String_Sort(UPARAM(ref) TArray <FString>& Array_To_Sort, bool Descending, bool FilterToUnique,  TArray <FString>& Sorted_Array);
 	UFUNCTION(BlueprintCallable)
 	static bool GetFilesInPath(const FString& FullPathOfBaseDir, TArray<FString>& FilenamesOut, bool Recursive, const FString& FilterByExtension);
+	UFUNCTION(BlueprintCallable)
+	static TSubclassOf<UCLRecipe> CreateContentLibRecipe(FString Name);
+
 };

@@ -27,17 +27,55 @@ FContentLib_Recipe UCLRecipeBPFLib::GenerateFromString(FString String)
 	{
 		Recipe.Name = Result->TryGetField("Name")->AsString();
 	}
+	if (Result->HasField("ManufacturingDuration") && Result->TryGetField("ManufacturingDuration")->Type == EJson::Number)
+	{
+		Recipe.ManufacturingDuration = Result->TryGetField("ManufacturingDuration")->AsNumber();
+	}
+	if (Result->HasField("ManualManufacturingMultiplier") && Result->TryGetField("ManualManufacturingMultiplier")->Type == EJson::Number)
+	{
+		Recipe.ManualManufacturingMultiplier = Result->TryGetField("ManualManufacturingMultiplier")->AsNumber();
+	}
+	if (Result->HasField("VariablePowerConsumptionFactor") && Result->TryGetField("VariablePowerConsumptionFactor")->Type == EJson::Number)
+	{
+		Recipe.VariablePowerConsumptionFactor = Result->TryGetField("VariablePowerConsumptionFactor")->AsNumber();
+	}
+	if (Result->HasField("VariablePowerConsumptionConstant") && Result->TryGetField("VariablePowerConsumptionConstant")->Type == EJson::Number)
+	{
+		Recipe.VariablePowerConsumptionConstant = Result->TryGetField("VariablePowerConsumptionConstant")->AsNumber();
+	}
+	if (Result->HasField("ManufacturingMenuPriority") && Result->TryGetField("ManufacturingMenuPriority")->Type == EJson::Number)
+	{
+		Recipe.ManufacturingMenuPriority = Result->TryGetField("ManufacturingMenuPriority")->AsNumber();
+	}
+	
 	if(Result->HasField("Ingredients") && Result->TryGetField("Ingredients")->Type == EJson::Array)
 	{
 		for(auto i : Result->TryGetField("Ingredients")->AsArray())
 		{
 			if(i->Type == EJson::Object)
 			{
-				if(i->AsObject()->HasField("Item") && i->AsObject()->HasField("Amount"))
+				const auto Obj = i->AsObject();
+				const bool HasItem = Obj->HasField("Item");
+				const bool HasAmount = Obj->HasField("Item");
+				if (HasItem && HasAmount)
 				{
-					if(i->AsObject()->TryGetField("Item")->Type == EJson::String && i->AsObject()->TryGetField("Amount")->Type == EJson::Number)
+					TSharedPtr<FJsonValue> Item = Obj->TryGetField("Item");
+					TSharedPtr<FJsonValue> Amount = Obj->TryGetField("Amount");
+
+					if (Item->Type == EJson::String && Amount->Type == EJson::Number)
 					{
-						Recipe.Ingredients.Add(i->AsObject()->TryGetField("Item")->AsString(),i->AsObject()->TryGetField("Amount")->AsNumber());
+						Recipe.Ingredients.Add(Item->AsString(), Amount->AsNumber());
+					}
+					else
+					{
+						if (Item->Type != EJson::String)
+						{
+							UE_LOG(LogTemp, Error, TEXT("Invalid Type on Ingredient. Expected String"));
+						}
+						else
+						{
+							UE_LOG(LogTemp, Error, TEXT("Invalid Type on Amount! Expected Number"));
+						}
 					}
 				}
 			}
@@ -51,13 +89,30 @@ FContentLib_Recipe UCLRecipeBPFLib::GenerateFromString(FString String)
 	{
 		for(auto i : Result->TryGetField("Products")->AsArray())
 		{
-			if(i->Type == EJson::Object)
+			if (i->Type == EJson::Object)
 			{
-				if(i->AsObject()->HasField("Item") && i->AsObject()->HasField("Amount"))
+				const auto Obj = i->AsObject();
+				const bool HasItem = Obj->HasField("Item");
+				const bool HasAmount = Obj->HasField("Item");
+				if (HasItem && HasAmount)
 				{
-					if(i->AsObject()->TryGetField("Item")->Type == EJson::String && i->AsObject()->TryGetField("Amount")->Type == EJson::Number)
+					TSharedPtr<FJsonValue> Item = Obj->TryGetField("Item");
+					TSharedPtr<FJsonValue> Amount = Obj->TryGetField("Amount");
+
+					if (Item->Type == EJson::String && Amount->Type == EJson::Number)
 					{
-						Recipe.Products.Add(i->AsObject()->TryGetField("Item")->AsString(),i->AsObject()->TryGetField("Amount")->AsNumber());
+						Recipe.Products.Add(Item->AsString(), Amount->AsNumber());
+					}
+					else
+					{
+						if (Item->Type != EJson::String)
+						{
+							UE_LOG(LogTemp, Error, TEXT("Invalid Type on Product. Expected String"));
+						}
+						else
+						{
+							UE_LOG(LogTemp, Error, TEXT("Invalid Type on Amount! Expected Number"));
+						}
 					}
 				}
 			}
@@ -75,6 +130,10 @@ FContentLib_Recipe UCLRecipeBPFLib::GenerateFromString(FString String)
 			{
 				Recipe.BuildIn.Add(i->AsString());
 			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("Invalid Type on ProducedIn! Expected String"));
+			}
 		}
 	}
 	else
@@ -89,6 +148,10 @@ FContentLib_Recipe UCLRecipeBPFLib::GenerateFromString(FString String)
 			{
 				Recipe.UnlockedBy.Add(i->AsString());
 			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("Invalid Type on UnlockedBy! Expected String"));
+			}
 		}
 	}
 
@@ -101,6 +164,7 @@ FContentLib_Recipe UCLRecipeBPFLib::GenerateFromString(FString String)
 	{
 		Recipe.ClearProducts = Result->TryGetField("ClearProducts")->AsBool();
 	}
+
 	if (Result->HasField("ClearBuilders") && Result->TryGetField("ClearBuilders")->Type == EJson::Boolean)
 	{
 		Recipe.ClearBuilders = Result->TryGetField("ClearBuilders")->AsBool();
@@ -108,7 +172,6 @@ FContentLib_Recipe UCLRecipeBPFLib::GenerateFromString(FString String)
 	
 	return Recipe;
 }
-
 
 FString UCLRecipeBPFLib::SerializeRecipe(const TSubclassOf<UFGRecipe> Recipe)
 {
@@ -189,14 +252,23 @@ FString UCLRecipeBPFLib::SerializeCLRecipe(FContentLib_Recipe Recipe)
 	const auto Ing = MakeShared<FJsonValueArray>(Ingredients);
 	const auto Prod = MakeShared<FJsonValueArray>(Ingredients);
 	const auto Producer = MakeShared<FJsonValueArray>(ProducedIn);
+	const auto ClearIngredients = MakeShared<FJsonValueBoolean>(Recipe.ClearIngredients);
+	const auto ClearProducts = MakeShared<FJsonValueBoolean>(Recipe.ClearProducts);
+	const auto ClearBuilders = MakeShared<FJsonValueBoolean>(Recipe.ClearBuilders);
+
+
+
 	
 	Obj->Values.Add("Name",Name);
 	Obj->Values.Add("Ingredients",Ing);
 	Obj->Values.Add("Products",Prod);
 	Obj->Values.Add("ProducedIn",Producer);
 	Obj->Values.Add("ManufacturingDuration", ManufacturingDuration);
-	Obj->Values.Add("mVariablePowerConsumptionFactor", mVariablePowerConsumptionFactor);
-	Obj->Values.Add("mVariablePowerConsumptionConstant", mVariablePowerConsumptionConstant);
+	Obj->Values.Add("VariablePowerConsumptionFactor", mVariablePowerConsumptionFactor);
+	Obj->Values.Add("VariablePowerConsumptionConstant", mVariablePowerConsumptionConstant);
+	Obj->Values.Add("ClearIngredients", ClearIngredients);
+	Obj->Values.Add("ClearProducts", ClearProducts);
+	Obj->Values.Add("ClearBuilders", ClearBuilders);
 
 	FString Write;
 	const TSharedRef<TJsonWriter<wchar_t, TPrettyJsonPrintPolicy<wchar_t>>> JsonWriter = TJsonWriterFactory<wchar_t, TPrettyJsonPrintPolicy<wchar_t>>::Create(&Write); //Our Writer Factory
@@ -381,4 +453,50 @@ bool UCLRecipeBPFLib::GetFilesInPath(const FString& FullPathOfBaseDir, TArray<FS
 	{
 		return FPlatformFileManager::Get().GetPlatformFile().IterateDirectory(*FullPathOfBaseDir, FilenamesVisitor);
 	}
+}
+
+TSubclassOf<UCLRecipe> UCLRecipeBPFLib::CreateContentLibRecipe(FString Name)
+{
+	if (Name == "" || FindObject<UClass>(ANY_PACKAGE, *Name, false) || FindObject<UClass>(ANY_PACKAGE, *Name.Append("_C"), false))
+		return nullptr;
+	const EClassFlags ParamsClassFlags = CLASS_Native | CLASS_MatchedSerializers;
+	UClass* ParentClass = UCLRecipe::StaticClass();
+	//Code below is taken from GetPrivateStaticClassBody
+	//Allocate memory from ObjectAllocator for class object and call class constructor directly
+	UClass* ConstructedClassObject = (UClass*)GUObjectAllocator.AllocateUObject(sizeof(UDynamicClass), alignof(UDynamicClass), true);
+	::new (ConstructedClassObject)UDynamicClass(
+		EC_StaticConstructor,
+		*Name,
+		ParentClass->GetStructureSize(),
+		ParentClass->GetMinAlignment(),
+		CLASS_Intrinsic,
+		CASTCLASS_None,
+		UObject::StaticConfigName(),
+		EObjectFlags(RF_Public | RF_Standalone | RF_Transient | RF_MarkAsNative | RF_MarkAsRootSet),
+		ParentClass->ClassConstructor,
+		ParentClass->ClassVTableHelperCtorCaller,
+		ParentClass->ClassAddReferencedObjects, nullptr);
+
+	//Set super structure and ClassWithin (they are required prior to registering)
+	FCppClassTypeInfoStatic TypeInfoStatic = { false };
+	ConstructedClassObject->SetSuperStruct(ParentClass);
+	ConstructedClassObject->ClassWithin = UObject::StaticClass();
+	ConstructedClassObject->SetCppTypeInfoStatic(&TypeInfoStatic);
+#if WITH_EDITOR
+	//Field with cpp type info only exists in editor, in shipping SetCppTypeInfoStatic is empty
+	ConstructedClassObject->SetCppTypeInfoStatic(&TypeInfoStatic);
+#endif
+	//Register pending object, apply class flags, set static type info and link it
+	ConstructedClassObject->RegisterDependencies();
+
+	ConstructedClassObject->DeferredRegister(UDynamicClass::StaticClass(), TEXT("/ContentLib_Recipes/"), *Name);
+
+	//Mark class as Constructed and perform linking
+	ConstructedClassObject->ClassFlags |= (EClassFlags)(ParamsClassFlags | CLASS_Constructed);
+	ConstructedClassObject->AssembleReferenceTokenStream(true);
+	ConstructedClassObject->StaticLink();
+
+	//Make sure default class object is initialized
+	ConstructedClassObject->GetDefaultObject();
+	return ConstructedClassObject;
 }

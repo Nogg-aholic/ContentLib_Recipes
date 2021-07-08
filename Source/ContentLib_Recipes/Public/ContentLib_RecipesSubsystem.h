@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 
-#include "FGRecipe.h"
+#include "CLRecipe.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "ContentLib_RecipesSubsystem.generated.h"
 
@@ -16,10 +16,9 @@ class CONTENTLIB_RECIPES_API UContentLib_RecipesSubsystem : public UGameInstance
 {
 	GENERATED_BODY()
 
-
 public:
 
-
+	UFUNCTION(BlueprintCallable)
 	void FillLoadedClasses();
 	
 	UPROPERTY(BlueprintReadOnly)
@@ -32,8 +31,8 @@ public:
 	TArray<UClass*> Schematics;
 	
 	UPROPERTY(BlueprintReadOnly)
-		TMap<TSubclassOf<UFGRecipe>, FString> JsonRecipes;
+		TMap<TSubclassOf<UCLRecipe>, FString> DynRecipes;
 
 	UPROPERTY(BlueprintReadOnly)
-		TMap<TSubclassOf<UFGRecipe>, FString> JsonRecipePatches;
+		TMap<TSubclassOf<UFGRecipe>, FString> RecipePatches;
 };
