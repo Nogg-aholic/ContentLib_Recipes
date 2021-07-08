@@ -1,5 +1,7 @@
 # ContentLib Recipes
 
+[Mod Page](https://ficsit.app/mod/5ak7eHymSNw4YN)
+
 ## This mod allows Users (and Developers) to easily define custom recipes for any machine, or overwrite recipes from other mods!
 
 Creating your own recipes is as simple as creating a JSON file (schema provided below) and placing it in the `FactoryGame/Configs/Recipes` directory and launching the game.
