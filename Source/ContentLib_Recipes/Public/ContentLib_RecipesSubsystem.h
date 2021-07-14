@@ -20,7 +20,15 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void FillLoadedClasses();
-	
+	UFUNCTION(BlueprintCallable)
+	FContentLib_Recipe GenerateFromString(FString String);
+	UFUNCTION(BlueprintCallable)
+	FString SerializeRecipe(TSubclassOf<UFGRecipe> Recipe);
+	UFUNCTION(BlueprintCallable)
+	FString SerializeCLRecipe(FContentLib_Recipe Recipe);
+	UFUNCTION(BlueprintCallable)
+	TSubclassOf<UCLRecipe> CreateContentLibRecipe(FString Name);
+
 	UPROPERTY(BlueprintReadOnly)
 	TArray<UClass*> Items;
 	UPROPERTY(BlueprintReadOnly)

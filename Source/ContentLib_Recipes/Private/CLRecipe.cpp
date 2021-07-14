@@ -156,8 +156,11 @@ void UCLRecipe::AddToSchematicUnlock(const TSubclassOf<class UFGRecipe> Recipe,F
 				{
 					if(Cast<UFGUnlockRecipe>(f))
 					{
-						Cast<UFGUnlockRecipe>(f)->mRecipes.Add(Recipe);
-						Added = true;
+						if (!Cast<UFGUnlockRecipe>(f)->mRecipes.Contains(Recipe))
+						{
+							Cast<UFGUnlockRecipe>(f)->mRecipes.Add(Recipe);
+							Added = true;
+						}
 					}
 				}
 				if (!Added)
