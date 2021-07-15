@@ -4,6 +4,7 @@
 #include "ContentLib_RecipesSubsystem.h"
 #include "FGSchematic.h"
 #include "FGWorkBench.h"
+#include "FGItemCategory.h"
 #include "Buildables/FGBuildableFactory.h"
 
 void UContentLib_RecipesSubsystem::FillLoadedClasses()
@@ -12,6 +13,7 @@ void UContentLib_RecipesSubsystem::FillLoadedClasses()
 	GetDerivedClasses(AFGBuildableFactory::StaticClass(), Builders, true);
 	GetDerivedClasses(UFGWorkBench::StaticClass(), CraftingComps, true);
 	GetDerivedClasses(UFGSchematic::StaticClass(), Schematics, true);
+	GetDerivedClasses(UFGItemCategory::StaticClass(), ItemCategories, true);
 }
 
 FContentLib_Recipe UContentLib_RecipesSubsystem::GenerateFromString(FString String)
@@ -42,6 +44,14 @@ FContentLib_Recipe UContentLib_RecipesSubsystem::GenerateFromString(FString Stri
 	if(Result->HasField("Name") && Result->TryGetField("Name")->Type == EJson::String)
 	{
 		Recipe.Name = Result->TryGetField("Name")->AsString();
+	}
+	if (Result->HasField("OverrideName") && Result->TryGetField("OverrideName")->Type == EJson::Boolean)
+	{
+		Recipe.OverrideName = static_cast<int32>(Result->TryGetField("OverrideName")->AsBool());
+	}
+	if (Result->HasField("Category") && Result->TryGetField("Category")->Type == EJson::String)
+	{
+		Recipe.Category = Result->TryGetField("Category")->AsString();
 	}
 	if (Result->HasField("ManufacturingDuration") && Result->TryGetField("ManufacturingDuration")->Type == EJson::Number)
 	{
@@ -75,8 +85,8 @@ FContentLib_Recipe UContentLib_RecipesSubsystem::GenerateFromString(FString Stri
 				const bool HasAmount = Obj->HasField("Amount");
 				if (HasItem && HasAmount)
 				{
-					TSharedPtr<FJsonValue> Item = Obj->TryGetField("Item");
-					TSharedPtr<FJsonValue> Amount = Obj->TryGetField("Amount");
+					const TSharedPtr<FJsonValue> Item = Obj->TryGetField("Item");
+					const TSharedPtr<FJsonValue> Amount = Obj->TryGetField("Amount");
 
 					if (Item->Type == EJson::String && Amount->Type == EJson::Number)
 					{
@@ -116,8 +126,8 @@ FContentLib_Recipe UContentLib_RecipesSubsystem::GenerateFromString(FString Stri
 				const bool HasAmount = Obj->HasField("Amount");
 				if (HasItem && HasAmount)
 				{
-					TSharedPtr<FJsonValue> Item = Obj->TryGetField("Item");
-					TSharedPtr<FJsonValue> Amount = Obj->TryGetField("Amount");
+					const TSharedPtr<FJsonValue> Item = Obj->TryGetField("Item");
+					const TSharedPtr<FJsonValue> Amount = Obj->TryGetField("Amount");
 
 					if (Item->Type == EJson::String && Amount->Type == EJson::Number)
 					{
@@ -204,8 +214,12 @@ FString UContentLib_RecipesSubsystem::SerializeRecipe(const TSubclassOf<UFGRecip
 	const auto CDO = Cast<UFGRecipe>(Recipe->GetDefaultObject());
 	const auto Obj = MakeShared<FJsonObject>();
 	const auto Name = MakeShared<FJsonValueString>(CDO->mDisplayName.ToString());
+	const auto Override = MakeShared<FJsonValueBoolean>(CDO->mDisplayNameOverride);
+	const auto Cat = MakeShared<FJsonValueString>(CDO->mOverriddenCategory->GetPathName());
+	const auto ManufacturingDuration = MakeShared<FJsonValueNumber>(CDO->mManufactoringDuration);
+	const auto mVariablePowerConsumptionFactor = MakeShared<FJsonValueNumber>(CDO->mVariablePowerConsumptionFactor);
+	const auto mVariablePowerConsumptionConstant = MakeShared<FJsonValueNumber>(CDO->mVariablePowerConsumptionConstant);
 
-	
 	TArray< TSharedPtr<FJsonValue>> Ingredients;
 	TArray< TSharedPtr<FJsonValue>> Products;
 	TArray< TSharedPtr<FJsonValue>> ProducedIn; 
@@ -233,9 +247,14 @@ FString UContentLib_RecipesSubsystem::SerializeRecipe(const TSubclassOf<UFGRecip
 	const auto Producer = MakeShared<FJsonValueArray>(ProducedIn);
 
 	Obj->Values.Add("Name",Name);
+	Obj->Values.Add("OverrideName", Override);
+	Obj->Values.Add("Category", Cat);
 	Obj->Values.Add("Ingredients",Ing);
 	Obj->Values.Add("Products",Prod);
 	Obj->Values.Add("ProducedIn",Producer);
+	Obj->Values.Add("ManufacturingDuration", ManufacturingDuration);
+	Obj->Values.Add("VariablePowerConsumptionFactor", mVariablePowerConsumptionFactor);
+	Obj->Values.Add("VariablePowerConsumptionConstant", mVariablePowerConsumptionConstant);
 	FString Write;
 	const TSharedRef<TJsonWriter<wchar_t, TPrettyJsonPrintPolicy<wchar_t>>> JsonWriter = TJsonWriterFactory<wchar_t, TPrettyJsonPrintPolicy<wchar_t>>::Create(&Write); //Our Writer Factory
 	FJsonSerializer::Serialize(Obj, JsonWriter);
@@ -246,6 +265,8 @@ FString UContentLib_RecipesSubsystem::SerializeCLRecipe(FContentLib_Recipe Recip
 {
 	const auto Obj = MakeShared<FJsonObject>();
 	const auto Name = MakeShared<FJsonValueString>(Recipe.Name);
+	const auto Override = MakeShared<FJsonValueBoolean>(static_cast<bool>(Recipe.OverrideName));
+	const auto Cat = MakeShared<FJsonValueString>(Recipe.Category);
 	const auto ManufacturingDuration = MakeShared<FJsonValueNumber>(Recipe.ManufacturingDuration);
 	const auto mVariablePowerConsumptionFactor = MakeShared<FJsonValueNumber>(Recipe.VariablePowerConsumptionFactor);
 	const auto mVariablePowerConsumptionConstant = MakeShared<FJsonValueNumber>(Recipe.VariablePowerConsumptionConstant);
@@ -284,6 +305,8 @@ FString UContentLib_RecipesSubsystem::SerializeCLRecipe(FContentLib_Recipe Recip
 
 	
 	Obj->Values.Add("Name",Name);
+	Obj->Values.Add("OverrideName", Override);
+	Obj->Values.Add("Category", Cat);
 	Obj->Values.Add("Ingredients",Ing);
 	Obj->Values.Add("Products",Prod);
 	Obj->Values.Add("ProducedIn",Producer);
@@ -300,12 +323,12 @@ FString UContentLib_RecipesSubsystem::SerializeCLRecipe(FContentLib_Recipe Recip
 	return Write;
 };
 
-TSubclassOf<UCLRecipe> UContentLib_RecipesSubsystem::CreateContentLibRecipe(FString Name)
+TSubclassOf<UObject> UContentLib_RecipesSubsystem::CreateContentLibRecipe(FString Name, TSubclassOf<UObject> Class)
 {
 	if (Name == "" || FindObject<UClass>(ANY_PACKAGE, *Name, false) || FindObject<UClass>(ANY_PACKAGE, *Name.Append("_C"), false))
 		return nullptr;
 	const EClassFlags ParamsClassFlags = CLASS_Native | CLASS_MatchedSerializers;
-	UClass* ParentClass = UCLRecipe::StaticClass();
+	UClass* ParentClass = Class;
 	//Code below is taken from GetPrivateStaticClassBody
 	//Allocate memory from ObjectAllocator for class object and call class constructor directly
 	UClass* ConstructedClassObject = (UClass*)GUObjectAllocator.AllocateUObject(sizeof(UDynamicClass), alignof(UDynamicClass), true);

@@ -13,20 +13,27 @@ USTRUCT(BlueprintType)
 struct  CONTENTLIB_RECIPES_API  FContentLib_Recipe
 {
 	GENERATED_BODY()
-	FContentLib_Recipe(): 
-		ManufacturingDuration(1), 
-		ManualManufacturingMultiplier(1), 
-		VariablePowerConsumptionFactor(1),
-		VariablePowerConsumptionConstant(0), 
-		ManufacturingMenuPriority(0),
-		ClearIngredients(true),
-		ClearProducts(true), 
-		ClearBuilders(true)
+	FContentLib_Recipe(): OverrideName(-1),
+	                      ManufacturingDuration(-1),
+	                      ManualManufacturingMultiplier(-1),
+	                      VariablePowerConsumptionFactor(-1),
+	                      VariablePowerConsumptionConstant(-1),
+	                      ManufacturingMenuPriority(-1),
+	                      ClearIngredients(true),
+	                      ClearProducts(true),
+	                      ClearBuilders(true)
 	{
 	} ;
 
 	UPROPERTY(BlueprintReadWrite)
+		int32 OverrideName;
+
+	UPROPERTY(BlueprintReadWrite)
 		FString Name;
+
+	UPROPERTY(BlueprintReadWrite)
+		FString Category;
+
 	UPROPERTY(BlueprintReadWrite)
 		TMap<FString, int32> Ingredients;
 	UPROPERTY(BlueprintReadWrite)
@@ -66,6 +73,7 @@ class CONTENTLIB_RECIPES_API UCLRecipe : public UFGRecipe
 	static void InitFromStruct(UContentLib_RecipesSubsystem* Subsystem ,FContentLib_Recipe RecipeStruct, TSubclassOf<class UFGRecipe> Recipe, bool ClearIngredients = true, bool ClearProducts = true, bool ClearBuilders = true);
 	UFUNCTION(BlueprintCallable)
 	static void AddToSchematicUnlock(TSubclassOf<class UFGRecipe> Recipe,FContentLib_Recipe RecipeStruct, UContentLib_RecipesSubsystem* Subsystem);
+	void AddToUnlock(TSubclassOf<UFGSchematic> Schematic, UContentLib_RecipesSubsystem* Subsystem);
 	UFUNCTION(BlueprintCallable)
 	static void AddBuilders(TSubclassOf<class UFGRecipe> Recipe,FContentLib_Recipe RecipeStruct,TArray<UClass*> Builders,TArray<UClass*> CraftingComps, bool ClearFirst = false);
 	UFUNCTION(BlueprintCallable)

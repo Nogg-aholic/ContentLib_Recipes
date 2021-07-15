@@ -6,13 +6,21 @@
       "type": "string",
       "description": "Recipe Name. If not used first Product is used as Name"
     },
+    "NameOverride": {
+      "type": "boolean",
+      "description": "The Presence of a Name sets this to true, after that this Field is checked, if it exists its value is written over"
+    },
+    "Category": {
+      "type": "string",
+      "description": "The Category of the Recipe. Recipes by default use the firsts Product Category, if this is used, the Category for the Recipe will override. 'Cat_' & '_C' are optional. This can optionally Create Categories when not existing. Instead of the Name, a valid Path can be used."
+    },
     "Ingredients": {
       "type": "array",
       "items": {
         "properties": {
           "Item": {
             "type": "string",
-            "description": "Class Name -> 'Desc_Coal_C' while 'Desc_' & '_C' is not required"
+            "description": "Class Name -> 'Desc_Coal_C' while 'Desc_' & '_C' is not required. Alternatively a full Path can be used"
           },
           "Amount": {
             "description": "Amount of Items",
