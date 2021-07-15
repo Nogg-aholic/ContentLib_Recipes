@@ -73,7 +73,7 @@ class CONTENTLIB_RECIPES_API UCLRecipe : public UFGRecipe
 	static void InitFromStruct(UContentLib_RecipesSubsystem* Subsystem ,FContentLib_Recipe RecipeStruct, TSubclassOf<class UFGRecipe> Recipe, bool ClearIngredients = true, bool ClearProducts = true, bool ClearBuilders = true);
 	UFUNCTION(BlueprintCallable)
 	static void AddToSchematicUnlock(TSubclassOf<class UFGRecipe> Recipe,FContentLib_Recipe RecipeStruct, UContentLib_RecipesSubsystem* Subsystem);
-	void AddToUnlock(TSubclassOf<UFGSchematic> Schematic, UContentLib_RecipesSubsystem* Subsystem);
+	void AddToUnlock(TSubclassOf<UFGSchematic> Schematic, UContentLib_RecipesSubsystem* Subsystem, const TSubclassOf<class UFGRecipe> Recipe);
 	UFUNCTION(BlueprintCallable)
 	static void AddBuilders(TSubclassOf<class UFGRecipe> Recipe,FContentLib_Recipe RecipeStruct,TArray<UClass*> Builders,TArray<UClass*> CraftingComps, bool ClearFirst = false);
 	UFUNCTION(BlueprintCallable)

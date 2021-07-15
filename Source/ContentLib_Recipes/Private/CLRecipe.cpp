@@ -293,7 +293,7 @@ void UCLRecipe::AddToSchematicUnlock(const TSubclassOf<class UFGRecipe> Recipe,F
 		{
 			UClass* Loaded = LoadObject<UClass>(nullptr, *RecipeStruct.Category);
 			if (Loaded && Loaded->IsChildOf(UFGSchematic::StaticClass()))
-				Cast<UCLRecipe>(Recipe.GetDefaultObject())->AddToUnlock(Loaded,Subsystem);
+				Cast<UCLRecipe>(Recipe.GetDefaultObject())->AddToUnlock(Loaded,Subsystem, Recipe);
 			else
 			{
 				UE_LOG(LogTemp,Error,TEXT("Finding Schematic by Path %s failed"), *i);
@@ -307,7 +307,7 @@ void UCLRecipe::AddToSchematicUnlock(const TSubclassOf<class UFGRecipe> Recipe,F
 				FString A = i;
 				if (S.Equals(i, ESearchCase::IgnoreCase) || S.Equals(A.Append("_C"), ESearchCase::IgnoreCase))
 				{
-					Cast<UCLRecipe>(Recipe.GetDefaultObject())->AddToUnlock(e,Subsystem);
+					Cast<UCLRecipe>(Recipe.GetDefaultObject())->AddToUnlock(e,Subsystem, Recipe);
 				}
 			}
 		}
@@ -315,7 +315,7 @@ void UCLRecipe::AddToSchematicUnlock(const TSubclassOf<class UFGRecipe> Recipe,F
 };
 
 
-void UCLRecipe::AddToUnlock(TSubclassOf<UFGSchematic> Schematic , UContentLib_RecipesSubsystem* Subsystem)
+void UCLRecipe::AddToUnlock(TSubclassOf<UFGSchematic> Schematic , UContentLib_RecipesSubsystem* Subsystem, const TSubclassOf<class UFGRecipe> Recipe)
 {
 	AFGSchematicManager * Manager = AFGSchematicManager::Get(Subsystem->GetWorld());
 	AFGUnlockSubsystem * Unlock = AFGUnlockSubsystem::Get(Subsystem->GetWorld());
@@ -324,9 +324,9 @@ void UCLRecipe::AddToUnlock(TSubclassOf<UFGSchematic> Schematic , UContentLib_Re
 	{
 		if(Cast<UFGUnlockRecipe>(f))
 		{
-			if (!Cast<UFGUnlockRecipe>(f)->mRecipes.Contains(this->GetClass()))
+			if (!Cast<UFGUnlockRecipe>(f)->mRecipes.Contains(Recipe))
 			{
-				Cast<UFGUnlockRecipe>(f)->mRecipes.Add(this->GetClass());
+				Cast<UFGUnlockRecipe>(f)->mRecipes.Add(Recipe);
 				Added = true;
 			}
 		}
@@ -343,14 +343,14 @@ void UCLRecipe::AddToUnlock(TSubclassOf<UFGSchematic> Schematic , UContentLib_Re
 			}
 		}
 		UFGUnlockRecipe* Object = NewObject<UFGUnlockRecipe>(Schematic.GetDefaultObject(),Class);
-		Object->mRecipes.Add(this->GetClass());
+		Object->mRecipes.Add(Recipe);
 		Schematic.GetDefaultObject()->mUnlocks.Add(Object);
 	}
 	if (Manager && Unlock && Unlock->HasAuthority())
 	{
 		if(Manager->IsSchematicPurchased(Schematic))
 		{
-			Unlock->UnlockRecipe(this->GetClass());
+			Unlock->UnlockRecipe(Recipe);
 		}
 	}
 }
