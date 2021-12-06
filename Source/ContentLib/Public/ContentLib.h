@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
-class FContentLib_RecipesModule : public IModuleInterface
+class FContentLibModule : public IModuleInterface
 {
 public:
 

@@ -3,9 +3,9 @@
 using UnrealBuildTool;
 using System.IO;
 using Tools.DotNETCommon;
-public class ContentLib_Recipes : ModuleRules
+public class ContentLib : ModuleRules
 {
-	public ContentLib_Recipes(ReadOnlyTargetRules Target) : base(Target)
+	public ContentLib(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
@@ -17,8 +17,8 @@ public class ContentLib_Recipes : ModuleRules
 			{
 				"Core", "CoreUObject",
 				"Engine",
-				"InputCore","UMG",
-				"FactoryGame", "SML","Json"
+				"InputCore","UMG","SlateCore","ImageWrapper", "RenderCore",
+				"FactoryGame", "SML", "Json"
 				// ... add other public dependencies that you statically link with here ...
 			}
 		);

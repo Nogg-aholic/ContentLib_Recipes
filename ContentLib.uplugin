@@ -1,14 +1,14 @@
 {
 	"FileVersion": 3,
 	"Version": 0,
-	"VersionName": "0.1.4",
-	"SemVersion": "0.1.4",
-	"FriendlyName": "ContentLib_Recipes",
+	"VersionName": "0.1.1",
+	"SemVersion": "0.1.1",
+	"FriendlyName": "ContentLib",
 	"Description": "",
 	"Category": "Modding",
 	"CreatedBy": "Nog",
 	"CreatedByURL": "",
-	"DocsURL": "https://github.com/Nogg-aholic/ContentLib_Recipes",
+	"DocsURL": "",
 	"MarketplaceURL": "",
 	"SupportURL": "",
 	"CanContainContent": true,
@@ -17,7 +17,7 @@
 	"Installed": false,
 	"Modules": [
 		{
-			"Name": "ContentLib_Recipes",
+			"Name": "ContentLib",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
 		}
