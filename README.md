@@ -1,3 +1,10 @@
+
+
+
+# this repo is out of date, use this repo instead: https://github.com/Nogg-aholic/ContentLib
+
+
+
 # ContentLib Recipes
 
 [Mod Page](https://ficsit.app/mod/5ak7eHymSNw4YN)
